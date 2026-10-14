@@ -4,11 +4,11 @@ plugins {
 }
 
 android {
-    namespace = "com.sk.screenrecordorapp"
+    namespace = "com.aistudio.gallery.pxkq"
     compileSdk = 37
 
     defaultConfig {
-        applicationId = "com.sk.screenrecordorapp"
+        applicationId = "com.aistudio.gallery.pxkq"
         minSdk = 26
         targetSdk = 37
         versionCode = 1
