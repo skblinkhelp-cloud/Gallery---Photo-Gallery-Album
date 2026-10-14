@@ -2,6 +2,7 @@ package com.sk.screenrecordorapp
 
 import android.Manifest
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -38,11 +39,14 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.sk.screenrecordorapp.model.MediaItem
+import com.sk.screenrecordorapp.model.SmartCategory
 import com.sk.screenrecordorapp.ui.GalleryScreen
 import com.sk.screenrecordorapp.ui.GalleryViewModel
 import com.sk.screenrecordorapp.ui.components.GalleryTopBar
@@ -111,7 +115,13 @@ fun GalleryApp(viewModel: GalleryViewModel) {
   ) { _ -> }
 
   // Media permissions for physical device photos & screenshots
-  val mediaPermissions = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+  val mediaPermissions = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+    arrayOf(
+      Manifest.permission.READ_MEDIA_IMAGES,
+      Manifest.permission.READ_MEDIA_VIDEO,
+      Manifest.permission.READ_MEDIA_VISUAL_USER_SELECTED
+    )
+  } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
     arrayOf(
       Manifest.permission.READ_MEDIA_IMAGES,
       Manifest.permission.READ_MEDIA_VIDEO
@@ -129,11 +139,22 @@ fun GalleryApp(viewModel: GalleryViewModel) {
     }
   }
 
+  val context = LocalContext.current
+
   LaunchedEffect(Unit) {
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
       notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
     }
-    mediaPermissionLauncher.launch(mediaPermissions)
+
+    val anyGranted = mediaPermissions.any { perm ->
+      ContextCompat.checkSelfPermission(context, perm) == PackageManager.PERMISSION_GRANTED
+    }
+
+    if (anyGranted) {
+      viewModel.scanDeviceMedia()
+    } else {
+      mediaPermissionLauncher.launch(mediaPermissions)
+    }
   }
 
   // Zero-Permission Android Photo Picker for importing media
@@ -355,7 +376,7 @@ fun GalleryApp(viewModel: GalleryViewModel) {
                     selectedStorageFilter = folderStorageFilter,
                     onSelectStorageFilter = { viewModel.setFolderStorageFilter(it) },
                     onFolderClick = { folder ->
-                      viewModel.selectCategory(com.sk.screenrecordorapp.model.SmartCategory.ALL)
+                      viewModel.selectCategory(SmartCategory.ALL)
                       viewModel.setSearchQuery(folder.name)
                       viewModel.setScreen(GalleryScreen.PHOTOS)
                     },

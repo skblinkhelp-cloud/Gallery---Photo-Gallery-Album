@@ -36,7 +36,9 @@ object MediaStoreHelper {
     val projection = mutableListOf(
       MediaStore.Images.Media._ID,
       MediaStore.Images.Media.DISPLAY_NAME,
+      MediaStore.Images.Media.DATE_TAKEN,
       MediaStore.Images.Media.DATE_MODIFIED,
+      MediaStore.Images.Media.DATE_ADDED,
       MediaStore.Images.Media.SIZE,
       MediaStore.Images.Media.WIDTH,
       MediaStore.Images.Media.HEIGHT,
@@ -58,7 +60,9 @@ object MediaStoreHelper {
       )?.use { cursor ->
         val idCol = cursor.getColumnIndexOrThrow(MediaStore.Images.Media._ID)
         val nameCol = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DISPLAY_NAME)
-        val dateCol = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATE_MODIFIED)
+        val dateTakenCol = cursor.getColumnIndex(MediaStore.Images.Media.DATE_TAKEN)
+        val dateModifiedCol = cursor.getColumnIndex(MediaStore.Images.Media.DATE_MODIFIED)
+        val dateAddedCol = cursor.getColumnIndex(MediaStore.Images.Media.DATE_ADDED)
         val sizeCol = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.SIZE)
         val widthCol = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.WIDTH)
         val heightCol = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.HEIGHT)
@@ -70,8 +74,18 @@ object MediaStoreHelper {
         while (cursor.moveToNext()) {
           val id = cursor.getLong(idCol)
           val name = cursor.getString(nameCol) ?: "Image_$id"
-          val dateSec = cursor.getLong(dateCol)
-          val timestamp = if (dateSec > 0) dateSec * 1000L else System.currentTimeMillis()
+
+          val dateTaken = if (dateTakenCol >= 0) cursor.getLong(dateTakenCol) else 0L
+          val dateModified = if (dateModifiedCol >= 0) cursor.getLong(dateModifiedCol) else 0L
+          val dateAdded = if (dateAddedCol >= 0) cursor.getLong(dateAddedCol) else 0L
+
+          val timestamp = when {
+            dateTaken > 0 -> dateTaken
+            dateModified > 0 -> dateModified * 1000L
+            dateAdded > 0 -> dateAdded * 1000L
+            else -> System.currentTimeMillis()
+          }
+
           val sizeBytes = cursor.getLong(sizeCol)
           val width = cursor.getInt(widthCol).let { if (it > 0) it else 1920 }
           val height = cursor.getInt(heightCol).let { if (it > 0) it else 1080 }
@@ -136,7 +150,9 @@ object MediaStoreHelper {
     val projection = mutableListOf(
       MediaStore.Video.Media._ID,
       MediaStore.Video.Media.DISPLAY_NAME,
+      MediaStore.Video.Media.DATE_TAKEN,
       MediaStore.Video.Media.DATE_MODIFIED,
+      MediaStore.Video.Media.DATE_ADDED,
       MediaStore.Video.Media.SIZE,
       MediaStore.Video.Media.WIDTH,
       MediaStore.Video.Media.HEIGHT,
@@ -155,7 +171,9 @@ object MediaStoreHelper {
       )?.use { cursor ->
         val idCol = cursor.getColumnIndexOrThrow(MediaStore.Video.Media._ID)
         val nameCol = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.DISPLAY_NAME)
-        val dateCol = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.DATE_MODIFIED)
+        val dateTakenCol = cursor.getColumnIndex(MediaStore.Video.Media.DATE_TAKEN)
+        val dateModifiedCol = cursor.getColumnIndex(MediaStore.Video.Media.DATE_MODIFIED)
+        val dateAddedCol = cursor.getColumnIndex(MediaStore.Video.Media.DATE_ADDED)
         val sizeCol = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.SIZE)
         val widthCol = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.WIDTH)
         val heightCol = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.HEIGHT)
@@ -165,8 +183,18 @@ object MediaStoreHelper {
         while (cursor.moveToNext()) {
           val id = cursor.getLong(idCol)
           val name = cursor.getString(nameCol) ?: "Video_$id"
-          val dateSec = cursor.getLong(dateCol)
-          val timestamp = if (dateSec > 0) dateSec * 1000L else System.currentTimeMillis()
+
+          val dateTaken = if (dateTakenCol >= 0) cursor.getLong(dateTakenCol) else 0L
+          val dateModified = if (dateModifiedCol >= 0) cursor.getLong(dateModifiedCol) else 0L
+          val dateAdded = if (dateAddedCol >= 0) cursor.getLong(dateAddedCol) else 0L
+
+          val timestamp = when {
+            dateTaken > 0 -> dateTaken
+            dateModified > 0 -> dateModified * 1000L
+            dateAdded > 0 -> dateAdded * 1000L
+            else -> System.currentTimeMillis()
+          }
+
           val sizeBytes = cursor.getLong(sizeCol)
           val width = cursor.getInt(widthCol).let { if (it > 0) it else 1920 }
           val height = cursor.getInt(heightCol).let { if (it > 0) it else 1080 }

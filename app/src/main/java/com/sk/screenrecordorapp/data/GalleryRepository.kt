@@ -10,6 +10,7 @@ import com.sk.screenrecordorapp.model.PhotoFilter
 import com.sk.screenrecordorapp.model.SmartCategory
 import com.sk.screenrecordorapp.model.StorageLocation
 import com.sk.screenrecordorapp.model.StorageStats
+import com.sk.screenrecordorapp.util.MediaStoreHelper
 import com.sk.screenrecordorapp.util.NotificationHelper
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -266,12 +267,13 @@ class GalleryRepository(private val appContext: Context) {
     coroutineScope.launch(Dispatchers.IO) {
       _isScanningDevice.value = true
       try {
-        val deviceMedia = com.sk.screenrecordorapp.util.MediaStoreHelper.loadDeviceMedia(appContext)
+        val deviceMedia = MediaStoreHelper.loadDeviceMedia(appContext)
         if (deviceMedia.isNotEmpty()) {
           _mediaItems.update { current ->
+            val userCurrent = current.filterNot { it.id.startsWith("m_") }
             val existingIds = deviceMedia.map { it.id }.toSet()
-            val filteredCurrent = current.filterNot { it.id in existingIds }
-            deviceMedia + filteredCurrent
+            val filteredCurrent = userCurrent.filterNot { it.id in existingIds }
+            (deviceMedia + filteredCurrent).sortedByDescending { it.timestamp }
           }
           recalculateFolders(_mediaItems.value)
         }
@@ -285,22 +287,6 @@ class GalleryRepository(private val appContext: Context) {
 
   private fun recalculateFolders(items: List<MediaItem>) {
     val folderMap = mutableMapOf<Pair<String, StorageLocation>, MutableList<MediaItem>>()
-
-    // Default standard folders
-    val defaultFolders = listOf(
-      "Camera" to StorageLocation.INTERNAL,
-      "Trip 2026" to StorageLocation.INTERNAL,
-      "Documents" to StorageLocation.INTERNAL,
-      "Screenshots" to StorageLocation.INTERNAL,
-      "Downloads" to StorageLocation.INTERNAL,
-      "Nature & Wildlife" to StorageLocation.SD_CARD,
-      "SD Backup" to StorageLocation.SD_CARD,
-      "SD / DCIM" to StorageLocation.SD_CARD
-    )
-
-    for ((name, storage) in defaultFolders) {
-      folderMap[name to storage] = mutableListOf()
-    }
 
     for (item in items) {
       val key = item.folderName to item.storageLocation
