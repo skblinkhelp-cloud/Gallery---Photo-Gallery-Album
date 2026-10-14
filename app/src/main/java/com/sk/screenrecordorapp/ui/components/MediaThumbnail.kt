@@ -28,6 +28,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -40,7 +41,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import coil.decode.VideoFrameDecoder
 import coil.request.ImageRequest
+import coil.request.videoFrameMillis
 import com.sk.screenrecordorapp.R
 import com.sk.screenrecordorapp.model.MediaItem
 import com.sk.screenrecordorapp.model.MediaType
@@ -68,6 +71,20 @@ fun MediaThumbnail(
     Modifier
   }
 
+  val imageRequest = remember(item.customUri, item.drawableResId, item.mediaType) {
+    val data = item.customUri ?: item.drawableResId
+    ImageRequest.Builder(context)
+      .data(data)
+      .apply {
+        if (item.mediaType == MediaType.VIDEO) {
+          decoderFactory(VideoFrameDecoder.Factory())
+          videoFrameMillis(1000)
+        }
+      }
+      .crossfade(true)
+      .build()
+  }
+
   Box(
     modifier = modifier
       .aspectRatio(1f)
@@ -80,24 +97,10 @@ fun MediaThumbnail(
       )
       .testTag("media_item_${item.id}")
   ) {
-    // Image rendering
-    if (item.customUri != null) {
+    // Image / Video Frame thumbnail rendering
+    if (item.customUri != null || item.drawableResId != null) {
       AsyncImage(
-        model = ImageRequest.Builder(context)
-          .data(item.customUri)
-          .crossfade(true)
-          .build(),
-        contentDescription = item.title,
-        contentScale = ContentScale.Crop,
-        colorFilter = colorFilter,
-        modifier = Modifier.fillMaxSize()
-      )
-    } else if (item.drawableResId != null) {
-      AsyncImage(
-        model = ImageRequest.Builder(context)
-          .data(item.drawableResId)
-          .crossfade(true)
-          .build(),
+        model = imageRequest,
         contentDescription = item.title,
         contentScale = ContentScale.Crop,
         colorFilter = colorFilter,

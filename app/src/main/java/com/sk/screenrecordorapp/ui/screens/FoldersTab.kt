@@ -50,7 +50,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import coil.decode.VideoFrameDecoder
 import coil.request.ImageRequest
+import coil.request.videoFrameMillis
 import com.sk.screenrecordorapp.R
 import com.sk.screenrecordorapp.model.FolderItem
 import com.sk.screenrecordorapp.model.StorageLocation
@@ -301,22 +303,21 @@ fun FoldersTab(
               .aspectRatio(1.2f)
               .background(MaterialTheme.colorScheme.surfaceVariant)
           ) {
-            if (folder.coverUri != null) {
+            if (folder.coverUri != null || folder.coverResId != null) {
+              val isVideo = folder.coverUri?.contains("video", ignoreCase = true) == true
+              val imageRequest = ImageRequest.Builder(context)
+                .data(folder.coverUri ?: folder.coverResId)
+                .apply {
+                  if (isVideo) {
+                    decoderFactory(VideoFrameDecoder.Factory())
+                    videoFrameMillis(1000)
+                  }
+                }
+                .crossfade(true)
+                .build()
+
               AsyncImage(
-                model = ImageRequest.Builder(context)
-                  .data(folder.coverUri)
-                  .crossfade(true)
-                  .build(),
-                contentDescription = folder.name,
-                contentScale = ContentScale.Crop,
-                modifier = Modifier.fillMaxSize()
-              )
-            } else if (folder.coverResId != null) {
-              AsyncImage(
-                model = ImageRequest.Builder(context)
-                  .data(folder.coverResId)
-                  .crossfade(true)
-                  .build(),
+                model = imageRequest,
                 contentDescription = folder.name,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier.fillMaxSize()

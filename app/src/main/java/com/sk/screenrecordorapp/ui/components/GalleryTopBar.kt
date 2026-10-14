@@ -1,6 +1,5 @@
 package com.sk.screenrecordorapp.ui.components
 
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -23,22 +22,23 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.CloudDone
-import androidx.compose.material.icons.filled.CloudSync
 import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.GridView
 import androidx.compose.material.icons.filled.LightMode
-import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LocalMinimumInteractiveComponentSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -50,9 +50,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.sk.screenrecordorapp.model.MediaItem
 import com.sk.screenrecordorapp.model.SmartCategory
-import com.sk.screenrecordorapp.ui.theme.EnhanceGold
 import com.sk.screenrecordorapp.ui.theme.ThemeMode
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun GalleryTopBar(
   searchQuery: String,
@@ -76,7 +76,7 @@ fun GalleryTopBar(
       modifier = Modifier
         .fillMaxWidth()
         .statusBarsPadding()
-        .padding(horizontal = 16.dp, vertical = 8.dp)
+        .padding(horizontal = 12.dp, vertical = 8.dp)
     ) {
       Row(
         modifier = Modifier.fillMaxWidth(),
@@ -90,7 +90,7 @@ fun GalleryTopBar(
         ) {
           Box(
             modifier = Modifier
-              .size(36.dp)
+              .size(32.dp)
               .clip(CircleShape)
               .background(MaterialTheme.colorScheme.primaryContainer),
             contentAlignment = Alignment.Center
@@ -99,142 +99,125 @@ fun GalleryTopBar(
               imageVector = Icons.Default.AutoAwesome,
               contentDescription = "Gallery",
               tint = MaterialTheme.colorScheme.primary,
-              modifier = Modifier.size(20.dp)
+              modifier = Modifier.size(18.dp)
             )
           }
-          Spacer(modifier = Modifier.width(10.dp))
-          Column {
-            Text(
-              text = "Gallery",
-              style = MaterialTheme.typography.titleLarge.copy(
-                fontWeight = FontWeight.Bold,
-                fontSize = 20.sp
-              ),
-              color = MaterialTheme.colorScheme.onSurface
-            )
-            Text(
-              text = "Smart & Offline",
-              style = MaterialTheme.typography.labelSmall,
-              color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-          }
+          Spacer(modifier = Modifier.width(6.dp))
+          Text(
+            text = "Gallery",
+            style = MaterialTheme.typography.titleLarge.copy(
+              fontWeight = FontWeight.Bold,
+              fontSize = 19.sp
+            ),
+            color = MaterialTheme.colorScheme.onSurface
+          )
         }
 
-        // Action icons: Cloud Sync, Grid, Theme, Import, Settings
-        Row(verticalAlignment = Alignment.CenterVertically) {
-          // Cloud Sync button / status
-          Box(
-            modifier = Modifier
-              .clip(RoundedCornerShape(16.dp))
-              .background(
-                if (isSyncing) MaterialTheme.colorScheme.primaryContainer
-                else MaterialTheme.colorScheme.surfaceVariant
-              )
-              .clickable(onClick = onSyncClick)
-              .padding(horizontal = 10.dp, vertical = 6.dp)
-              .testTag("cloud_sync_button"),
-            contentAlignment = Alignment.Center
+        // Action icons: Cloud Sync, Import, Grid, Theme, Settings
+        CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides 0.dp) {
+          Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(4.dp)
           ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-              if (isSyncing) {
-                CircularProgressIndicator(
-                  modifier = Modifier.size(16.dp),
-                  strokeWidth = 2.dp,
-                  color = MaterialTheme.colorScheme.primary
+            // Cloud Sync status
+            Box(
+              modifier = Modifier
+                .clip(RoundedCornerShape(14.dp))
+                .background(
+                  if (isSyncing) MaterialTheme.colorScheme.primaryContainer
+                  else MaterialTheme.colorScheme.surfaceVariant
                 )
-                Spacer(modifier = Modifier.width(6.dp))
-                Text(
-                  text = "Syncing",
-                  style = MaterialTheme.typography.labelSmall,
-                  color = MaterialTheme.colorScheme.primary,
-                  fontWeight = FontWeight.SemiBold
-                )
-              } else {
-                Icon(
-                  imageVector = Icons.Default.CloudDone,
-                  contentDescription = "Cloud Synced",
-                  tint = MaterialTheme.colorScheme.primary,
-                  modifier = Modifier.size(16.dp)
-                )
-                Spacer(modifier = Modifier.width(4.dp))
-                Text(
-                  text = "Synced",
-                  style = MaterialTheme.typography.labelSmall,
-                  color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+                .clickable(onClick = onSyncClick)
+                .padding(horizontal = 8.dp, vertical = 5.dp)
+                .testTag("cloud_sync_button"),
+              contentAlignment = Alignment.Center
+            ) {
+              Row(verticalAlignment = Alignment.CenterVertically) {
+                if (isSyncing) {
+                  CircularProgressIndicator(
+                    modifier = Modifier.size(14.dp),
+                    strokeWidth = 2.dp,
+                    color = MaterialTheme.colorScheme.primary
+                  )
+                } else {
+                  Icon(
+                    imageVector = Icons.Default.CloudDone,
+                    contentDescription = "Cloud Synced",
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(14.dp)
+                  )
+                }
               }
             }
-          }
 
-          Spacer(modifier = Modifier.width(4.dp))
+            // Add / Import Media
+            IconButton(
+              onClick = onImportClick,
+              modifier = Modifier
+                .size(32.dp)
+                .testTag("import_media_button")
+            ) {
+              Icon(
+                imageVector = Icons.Default.Add,
+                contentDescription = "Import photos",
+                tint = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.size(20.dp)
+              )
+            }
 
-          // Add / Import Media
-          IconButton(
-            onClick = onImportClick,
-            modifier = Modifier
-              .size(36.dp)
-              .testTag("import_media_button")
-          ) {
-            Icon(
-              imageVector = Icons.Default.Add,
-              contentDescription = "Import photos",
-              tint = MaterialTheme.colorScheme.onSurface,
-              modifier = Modifier.size(20.dp)
-            )
-          }
+            // Grid density toggle
+            IconButton(
+              onClick = onToggleGridDensity,
+              modifier = Modifier
+                .size(32.dp)
+                .testTag("grid_density_toggle")
+            ) {
+              Icon(
+                imageVector = Icons.Default.GridView,
+                contentDescription = "Toggle Grid (${gridColumns} columns)",
+                tint = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.size(20.dp)
+              )
+            }
 
-          // Grid density toggle
-          IconButton(
-            onClick = onToggleGridDensity,
-            modifier = Modifier
-              .size(36.dp)
-              .testTag("grid_density_toggle")
-          ) {
-            Icon(
-              imageVector = Icons.Default.GridView,
-              contentDescription = "Toggle Grid (${gridColumns} columns)",
-              tint = MaterialTheme.colorScheme.onSurface,
-              modifier = Modifier.size(20.dp)
-            )
-          }
+            // Theme toggle
+            IconButton(
+              onClick = onToggleTheme,
+              modifier = Modifier
+                .size(32.dp)
+                .testTag("dark_mode_toggle")
+            ) {
+              Icon(
+                imageVector = when (themeMode) {
+                  ThemeMode.DARK -> Icons.Default.LightMode
+                  ThemeMode.LIGHT -> Icons.Default.DarkMode
+                  ThemeMode.SYSTEM -> Icons.Default.DarkMode
+                },
+                contentDescription = "Toggle Dark Mode",
+                tint = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.size(20.dp)
+              )
+            }
 
-          // Theme toggle
-          IconButton(
-            onClick = onToggleTheme,
-            modifier = Modifier
-              .size(36.dp)
-              .testTag("dark_mode_toggle")
-          ) {
-            Icon(
-              imageVector = when (themeMode) {
-                ThemeMode.DARK -> Icons.Default.LightMode
-                ThemeMode.LIGHT -> Icons.Default.DarkMode
-                ThemeMode.SYSTEM -> Icons.Default.DarkMode
-              },
-              contentDescription = "Toggle Dark Mode",
-              tint = MaterialTheme.colorScheme.onSurface,
-              modifier = Modifier.size(20.dp)
-            )
-          }
-
-          // Settings
-          IconButton(
-            onClick = onSettingsClick,
-            modifier = Modifier
-              .size(36.dp)
-              .testTag("settings_button")
-          ) {
-            Icon(
-              imageVector = Icons.Default.Settings,
-              contentDescription = "Gallery Settings",
-              tint = MaterialTheme.colorScheme.onSurface,
-              modifier = Modifier.size(20.dp)
-            )
+            // Settings Gear Icon
+            IconButton(
+              onClick = onSettingsClick,
+              modifier = Modifier
+                .size(32.dp)
+                .testTag("settings_button")
+            ) {
+              Icon(
+                imageVector = Icons.Default.Settings,
+                contentDescription = "Gallery Settings",
+                tint = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.size(20.dp)
+              )
+            }
           }
         }
       }
 
-      Spacer(modifier = Modifier.height(10.dp))
+      Spacer(modifier = Modifier.height(8.dp))
 
       // Search bar
       OutlinedTextField(

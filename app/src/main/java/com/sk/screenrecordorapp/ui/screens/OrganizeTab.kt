@@ -50,8 +50,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import coil.decode.VideoFrameDecoder
 import coil.request.ImageRequest
+import coil.request.videoFrameMillis
 import com.sk.screenrecordorapp.model.MediaItem
+import com.sk.screenrecordorapp.model.MediaType
 import com.sk.screenrecordorapp.model.SmartCategory
 import com.sk.screenrecordorapp.ui.theme.EnhanceGold
 import com.sk.screenrecordorapp.ui.theme.NatureGreen
@@ -308,22 +311,21 @@ fun OrganizeTab(
               .background(MaterialTheme.colorScheme.surfaceVariant),
             contentAlignment = Alignment.Center
           ) {
-            if (coverItem?.drawableResId != null) {
+            if (coverItem?.drawableResId != null || coverItem?.customUri != null) {
+              val isVideoCategory = category == SmartCategory.VIDEOS || category == SmartCategory.MOVIES || coverItem?.mediaType == MediaType.VIDEO
+              val imageRequest = ImageRequest.Builder(context)
+                .data(coverItem?.customUri ?: coverItem?.drawableResId)
+                .apply {
+                  if (isVideoCategory) {
+                    decoderFactory(VideoFrameDecoder.Factory())
+                    videoFrameMillis(1000)
+                  }
+                }
+                .crossfade(true)
+                .build()
+
               AsyncImage(
-                model = ImageRequest.Builder(context)
-                  .data(coverItem.drawableResId)
-                  .crossfade(true)
-                  .build(),
-                contentDescription = category.displayName,
-                contentScale = ContentScale.Crop,
-                modifier = Modifier.fillMaxSize()
-              )
-            } else if (coverItem?.customUri != null) {
-              AsyncImage(
-                model = ImageRequest.Builder(context)
-                  .data(coverItem.customUri)
-                  .crossfade(true)
-                  .build(),
+                model = imageRequest,
                 contentDescription = category.displayName,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier.fillMaxSize()
