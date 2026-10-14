@@ -1,6 +1,10 @@
 package com.sk.screenrecordorapp.ui.screens
 
 import android.content.Intent
+import android.net.Uri
+import android.widget.MediaController
+import android.widget.Toast
+import android.widget.VideoView
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
@@ -37,6 +41,7 @@ import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -44,6 +49,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -63,9 +69,11 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.viewinterop.AndroidView
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.sk.screenrecordorapp.model.MediaItem
+import com.sk.screenrecordorapp.model.MediaType
 import com.sk.screenrecordorapp.model.StorageLocation
 import com.sk.screenrecordorapp.ui.theme.EnhanceGold
 import com.sk.screenrecordorapp.ui.theme.SdCardTeal
@@ -101,6 +109,7 @@ fun PhotoViewerScreen(
   var offsetY by remember { mutableFloatStateOf(0f) }
 
   val colorFilter = ColorFilterHelper.getColorFilterForMedia(mediaItem)
+  val isVideo = mediaItem.mediaType == MediaType.VIDEO
 
   Box(
     modifier = modifier
@@ -108,79 +117,99 @@ fun PhotoViewerScreen(
       .background(Color.Black)
       .testTag("photo_viewer_screen")
   ) {
-    // Zoomable & Swipeable Image Container
+    // Zoomable Image or Native Video Player
     Box(
       modifier = Modifier
         .fillMaxSize()
-        .pointerInput(mediaItem.id) {
-          detectTapGestures(
-            onDoubleTap = {
-              if (scale > 1f) {
-                scale = 1f
-                offsetX = 0f
-                offsetY = 0f
-              } else {
-                scale = 2.5f
+        .then(
+          if (!isVideo) {
+            Modifier
+              .pointerInput(mediaItem.id) {
+                detectTapGestures(
+                  onDoubleTap = {
+                    if (scale > 1f) {
+                      scale = 1f
+                      offsetX = 0f
+                      offsetY = 0f
+                    } else {
+                      scale = 2.5f
+                    }
+                  },
+                  onTap = {
+                    isControlsVisible = !isControlsVisible
+                  }
+                )
               }
-            },
-            onTap = {
-              isControlsVisible = !isControlsVisible
-            }
-          )
-        }
-        .pointerInput(mediaItem.id) {
-          detectTransformGestures { _, pan, zoom, _ ->
-            val newScale = (scale * zoom).coerceIn(1f, 5f)
-            scale = newScale
-            if (newScale > 1.05f) {
-              val maxX = (newScale - 1f) * 600f
-              val maxY = (newScale - 1f) * 800f
-              offsetX = (offsetX + pan.x).coerceIn(-maxX, maxX)
-              offsetY = (offsetY + pan.y).coerceIn(-maxY, maxY)
-            } else {
-              scale = 1f
-              offsetX = 0f
-              offsetY = 0f
-            }
-          }
-        },
+              .pointerInput(mediaItem.id) {
+                detectTransformGestures { _, pan, zoom, _ ->
+                  val newScale = (scale * zoom).coerceIn(1f, 5f)
+                  scale = newScale
+                  if (newScale > 1.05f) {
+                    val maxX = (newScale - 1f) * 600f
+                    val maxY = (newScale - 1f) * 800f
+                    offsetX = (offsetX + pan.x).coerceIn(-maxX, maxX)
+                    offsetY = (offsetY + pan.y).coerceIn(-maxY, maxY)
+                  } else {
+                    scale = 1f
+                    offsetX = 0f
+                    offsetY = 0f
+                  }
+                }
+              }
+          } else Modifier
+        ),
       contentAlignment = Alignment.Center
     ) {
-      if (mediaItem.customUri != null) {
-        AsyncImage(
-          model = ImageRequest.Builder(context)
-            .data(mediaItem.customUri)
-            .crossfade(true)
-            .build(),
-          contentDescription = mediaItem.title,
-          contentScale = ContentScale.Fit,
-          colorFilter = colorFilter,
-          modifier = Modifier
-            .fillMaxSize()
-            .graphicsLayer(
-              scaleX = scale,
-              scaleY = scale,
-              translationX = offsetX,
-              translationY = offsetY,
-              rotationZ = mediaItem.rotationDegrees.toFloat()
-            )
-        )
-      } else if (mediaItem.drawableResId != null) {
-        Image(
-          painter = painterResource(id = mediaItem.drawableResId),
-          contentDescription = mediaItem.title,
-          contentScale = ContentScale.Fit,
-          colorFilter = colorFilter,
-          modifier = Modifier
-            .fillMaxSize()
-            .graphicsLayer(
-              scaleX = scale,
-              scaleY = scale,
-              translationX = offsetX,
-              translationY = offsetY,
-              rotationZ = mediaItem.rotationDegrees.toFloat()
-            )
-        )
+      if (isVideo) {
+        val videoUri = when {
+          mediaItem.customUri != null -> Uri.parse(mediaItem.customUri)
+          mediaItem.drawableResId != null -> Uri.parse("android.resource://${context.packageName}/${mediaItem.drawableResId}")
+          else -> null
+        }
+
+        if (videoUri != null) {
+          VideoPlayer(
+            uri = videoUri,
+            modifier = Modifier.fillMaxSize()
+          )
+        }
+      } else {
+        if (mediaItem.customUri != null) {
+          AsyncImage(
+            model = ImageRequest.Builder(context)
+              .data(mediaItem.customUri)
+              .crossfade(true)
+              .build(),
+            contentDescription = mediaItem.title,
+            contentScale = ContentScale.Fit,
+            colorFilter = colorFilter,
+            modifier = Modifier
+              .fillMaxSize()
+              .graphicsLayer(
+                scaleX = scale,
+                scaleY = scale,
+                translationX = offsetX,
+                translationY = offsetY,
+                rotationZ = mediaItem.rotationDegrees.toFloat()
+              )
+          )
+        } else if (mediaItem.drawableResId != null) {
+          Image(
+            painter = painterResource(id = mediaItem.drawableResId),
+            contentDescription = mediaItem.title,
+            contentScale = ContentScale.Fit,
+            colorFilter = colorFilter,
+            modifier = Modifier
+              .fillMaxSize()
+              .graphicsLayer(
+                scaleX = scale,
+                scaleY = scale,
+                translationX = offsetX,
+                translationY = offsetY,
+                rotationZ = mediaItem.rotationDegrees.toFloat()
+              )
+          )
+        }
       }
     }
 
@@ -396,32 +425,70 @@ fun PhotoViewerScreen(
               icon = Icons.Default.Share,
               label = "Share",
               onClick = {
+                val videoUri = when {
+                  mediaItem.customUri != null -> Uri.parse(mediaItem.customUri)
+                  else -> null
+                }
                 val sendIntent = Intent().apply {
                   action = Intent.ACTION_SEND
-                  putExtra(Intent.EXTRA_TEXT, "Sharing photo: ${mediaItem.title}")
-                  type = "text/plain"
+                  if (videoUri != null) {
+                    putExtra(Intent.EXTRA_STREAM, videoUri)
+                    type = if (isVideo) "video/*" else "image/*"
+                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                  } else {
+                    putExtra(Intent.EXTRA_TEXT, "Sharing item: ${mediaItem.title}")
+                    type = "text/plain"
+                  }
                 }
-                context.startActivity(Intent.createChooser(sendIntent, "Share Photo"))
+                context.startActivity(Intent.createChooser(sendIntent, "Share Media"))
               },
               modifier = Modifier.testTag("viewer_share_button")
             )
 
-            // 1-Tap Auto-Enhance Button
-            ViewerActionItem(
-              icon = Icons.Default.AutoAwesome,
-              label = if (mediaItem.autoEnhanced) "Enhanced" else "Auto-Enhance",
-              tint = if (mediaItem.autoEnhanced) EnhanceGold else Color.White,
-              onClick = { onAutoEnhance(mediaItem.id) },
-              modifier = Modifier.testTag("viewer_one_tap_enhance")
-            )
+            if (isVideo) {
+              // Open in External System Video Player
+              ViewerActionItem(
+                icon = Icons.Default.PlayArrow,
+                label = "System Player",
+                tint = EnhanceGold,
+                onClick = {
+                  val videoUri = when {
+                    mediaItem.customUri != null -> Uri.parse(mediaItem.customUri)
+                    mediaItem.drawableResId != null -> Uri.parse("android.resource://${context.packageName}/${mediaItem.drawableResId}")
+                    else -> null
+                  }
+                  if (videoUri != null) {
+                    val playIntent = Intent(Intent.ACTION_VIEW).apply {
+                      setDataAndType(videoUri, "video/*")
+                      addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                    }
+                    try {
+                      context.startActivity(playIntent)
+                    } catch (e: Exception) {
+                      Toast.makeText(context, "No external video player found", Toast.LENGTH_SHORT).show()
+                    }
+                  }
+                },
+                modifier = Modifier.testTag("viewer_external_player")
+              )
+            } else {
+              // 1-Tap Auto-Enhance Button (Photos)
+              ViewerActionItem(
+                icon = Icons.Default.AutoAwesome,
+                label = if (mediaItem.autoEnhanced) "Enhanced" else "Auto-Enhance",
+                tint = if (mediaItem.autoEnhanced) EnhanceGold else Color.White,
+                onClick = { onAutoEnhance(mediaItem.id) },
+                modifier = Modifier.testTag("viewer_one_tap_enhance")
+              )
 
-            // Edit suite
-            ViewerActionItem(
-              icon = Icons.Default.Edit,
-              label = "Edit",
-              onClick = { onOpenEditor(mediaItem.id) },
-              modifier = Modifier.testTag("viewer_edit_button")
-            )
+              // Edit suite
+              ViewerActionItem(
+                icon = Icons.Default.Edit,
+                label = "Edit",
+                onClick = { onOpenEditor(mediaItem.id) },
+                modifier = Modifier.testTag("viewer_edit_button")
+              )
+            }
 
             // Move / Transfer
             ViewerActionItem(
@@ -444,6 +511,43 @@ fun PhotoViewerScreen(
       }
     }
   }
+}
+
+@Composable
+fun VideoPlayer(
+  uri: Uri,
+  modifier: Modifier = Modifier
+) {
+  var videoViewRef by remember { mutableStateOf<VideoView?>(null) }
+
+  DisposableEffect(uri) {
+    onDispose {
+      videoViewRef?.stopPlayback()
+    }
+  }
+
+  AndroidView(
+    factory = { ctx ->
+      VideoView(ctx).apply {
+        videoViewRef = this
+        setVideoURI(uri)
+        val controller = MediaController(ctx)
+        controller.setAnchorView(this)
+        setMediaController(controller)
+        setOnPreparedListener { mp ->
+          mp.isLooping = true
+          start()
+        }
+        setOnErrorListener { _, _, _ ->
+          true
+        }
+      }
+    },
+    update = { view ->
+      videoViewRef = view
+    },
+    modifier = modifier
+  )
 }
 
 @Composable
