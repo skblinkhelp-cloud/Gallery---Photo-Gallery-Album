@@ -1,7 +1,6 @@
 package com.aistudio.gallery.pxkq
 
 import android.Manifest
-import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
@@ -177,7 +176,7 @@ fun GalleryApp(viewModel: GalleryViewModel) {
   }
 
   // Back handling for screens
-  if (currentScreen != GalleryScreen.PHOTOS && currentScreen != GalleryScreen.VIEWER && currentScreen != GalleryScreen.EDITOR) {
+  if ((currentScreen != GalleryScreen.PHOTOS) && (currentScreen != GalleryScreen.VIEWER) && (currentScreen != GalleryScreen.EDITOR)) {
     BackHandler {
       viewModel.setScreen(GalleryScreen.PHOTOS)
     }
