@@ -109,10 +109,20 @@ fun GalleryApp(viewModel: GalleryViewModel) {
   val showMediaInfoSheet by viewModel.showMediaInfoSheet.collectAsStateWithLifecycle()
   val showCleanStorageDialog by viewModel.showCleanStorageDialog.collectAsStateWithLifecycle()
 
+  val context = LocalContext.current
+
   // Notification Permission Request (Android 13+)
   val notificationPermissionLauncher = rememberLauncherForActivityResult(
     contract = ActivityResultContracts.RequestPermission()
   ) { _ -> }
+
+  val requestNotificationPermissionIfNeeded = {
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+      if (ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+        notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+      }
+    }
+  }
 
   // Media permissions for physical device photos & screenshots
   val mediaPermissions = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
@@ -137,21 +147,17 @@ fun GalleryApp(viewModel: GalleryViewModel) {
     if (anyGranted) {
       viewModel.scanDeviceMedia()
     }
+    requestNotificationPermissionIfNeeded()
   }
 
-  val context = LocalContext.current
-
   LaunchedEffect(Unit) {
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-      notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
-    }
-
     val anyGranted = mediaPermissions.any { perm ->
       ContextCompat.checkSelfPermission(context, perm) == PackageManager.PERMISSION_GRANTED
     }
 
     if (anyGranted) {
       viewModel.scanDeviceMedia()
+      requestNotificationPermissionIfNeeded()
     } else {
       mediaPermissionLauncher.launch(mediaPermissions)
     }
