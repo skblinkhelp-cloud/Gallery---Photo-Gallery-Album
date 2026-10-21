@@ -11,8 +11,8 @@ android {
         applicationId = "com.aistudio.gallery.pxkq"
         minSdk = 26
         targetSdk = 37
-        versionCode = 6
-        versionName = "2.3"
+        versionCode = 7
+        versionName = "2.4"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -20,9 +20,9 @@ android {
     signingConfigs {
         create("release") {
             storeFile = file("my-upload-key.jks")
-            storePassword = "android"
-            keyAlias = "upload"
-            keyPassword = "android"
+            storePassword = "Dano7262@@"
+            keyAlias = "key0"
+            keyPassword = "Dano7262@@"
         }
     }
 
