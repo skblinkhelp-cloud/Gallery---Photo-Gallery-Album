@@ -2,11 +2,9 @@ package com.aistudio.gallery.pxkq.data
 
 import android.content.Context
 import android.util.Log
-import com.aistudio.gallery.pxkq.R
 import com.aistudio.gallery.pxkq.model.FolderItem
 import com.aistudio.gallery.pxkq.model.MediaItem
 import com.aistudio.gallery.pxkq.model.MediaType
-import com.aistudio.gallery.pxkq.model.PhotoFilter
 import com.aistudio.gallery.pxkq.model.SmartCategory
 import com.aistudio.gallery.pxkq.model.StorageLocation
 import com.aistudio.gallery.pxkq.model.StorageStats
@@ -44,223 +42,14 @@ class GalleryRepository(private val appContext: Context) {
   private val _isAutoOrganizing = MutableStateFlow(false)
   val isAutoOrganizing: StateFlow<Boolean> = _isAutoOrganizing.asStateFlow()
 
-  private val _lastOrganizedInfo = MutableStateFlow("Auto-organized last night • 48 items grouped")
+  private val _lastOrganizedInfo = MutableStateFlow("Auto-organized last night")
   val lastOrganizedInfo: StateFlow<String> = _lastOrganizedInfo.asStateFlow()
 
   private val _isScanningDevice = MutableStateFlow(false)
   val isScanningDevice: StateFlow<Boolean> = _isScanningDevice.asStateFlow()
 
   init {
-    loadInitialData()
     scanDeviceMedia()
-  }
-
-  private fun loadInitialData() {
-    val initialItems = listOf(
-      MediaItem(
-        id = "m_nature_1",
-        title = "Alpine Sunset Mirror Lake",
-        drawableResId = R.drawable.sample_nature_mountain,
-        mediaType = MediaType.PHOTO,
-        category = SmartCategory.NATURE,
-        timestamp = System.currentTimeMillis() - 3_600_000L * 2,
-        dateFormatted = "Today, 4:15 PM",
-        timelineGroup = "Today",
-        location = "Yosemite National Park, CA",
-        isFavorite = true,
-        storageLocation = StorageLocation.INTERNAL,
-        folderName = "Camera",
-        fileSizeBytes = 3_420_000L,
-        width = 1920,
-        height = 1440,
-        isCloudSynced = true
-      ),
-      MediaItem(
-        id = "m_people_1",
-        title = "Elena Golden Hour Walk",
-        drawableResId = R.drawable.sample_portrait_smile,
-        mediaType = MediaType.PHOTO,
-        category = SmartCategory.PEOPLE,
-        timestamp = System.currentTimeMillis() - 3_600_000L * 5,
-        dateFormatted = "Today, 1:20 PM",
-        timelineGroup = "Today",
-        location = "Dolores Park, San Francisco",
-        isFavorite = true,
-        storageLocation = StorageLocation.INTERNAL,
-        folderName = "Camera",
-        fileSizeBytes = 2_890_000L,
-        width = 1440,
-        height = 1920,
-        isCloudSynced = true
-      ),
-      MediaItem(
-        id = "m_animal_1",
-        title = "Autumn Fox Kit in Snow",
-        drawableResId = R.drawable.sample_animal_fox,
-        mediaType = MediaType.PHOTO,
-        category = SmartCategory.ANIMALS,
-        timestamp = System.currentTimeMillis() - 86_400_000L,
-        dateFormatted = "Yesterday, 3:45 PM",
-        timelineGroup = "Yesterday",
-        location = "Lake Tahoe Forest, NV",
-        isFavorite = true,
-        storageLocation = StorageLocation.SD_CARD,
-        folderName = "Nature & Wildlife",
-        fileSizeBytes = 3_150_000L,
-        width = 1920,
-        height = 1440,
-        isCloudSynced = true
-      ),
-      MediaItem(
-        id = "m_selfie_1",
-        title = "Sunny Trailhead Selfie",
-        drawableResId = R.drawable.sample_portrait_smile,
-        mediaType = MediaType.PHOTO,
-        category = SmartCategory.SELFIES,
-        timestamp = System.currentTimeMillis() - 86_400_000L * 2,
-        dateFormatted = "Oct 10, 2026",
-        timelineGroup = "October 2026",
-        location = "Marin Headlands, CA",
-        isFavorite = false,
-        storageLocation = StorageLocation.INTERNAL,
-        folderName = "Camera",
-        fileSizeBytes = 2_340_000L,
-        width = 1440,
-        height = 1920,
-        isCloudSynced = true
-      ),
-      MediaItem(
-        id = "m_nature_2",
-        title = "Mountain Peaks Morning Fog",
-        drawableResId = R.drawable.sample_nature_mountain,
-        mediaType = MediaType.PHOTO,
-        category = SmartCategory.NATURE,
-        timestamp = System.currentTimeMillis() - 86_400_000L * 4,
-        dateFormatted = "Oct 8, 2026",
-        timelineGroup = "October 2026",
-        location = "Sierra Nevada, CA",
-        isFavorite = false,
-        storageLocation = StorageLocation.SD_CARD,
-        folderName = "SD Backup",
-        fileSizeBytes = 4_100_000L,
-        width = 1920,
-        height = 1440,
-        isCloudSynced = true
-      ),
-      MediaItem(
-        id = "m_doc_1",
-        title = "Park Permit & Trail Map",
-        drawableResId = R.drawable.sample_nature_mountain,
-        mediaType = MediaType.PHOTO,
-        category = SmartCategory.DOCUMENTS,
-        timestamp = System.currentTimeMillis() - 86_400_000L * 6,
-        dateFormatted = "Oct 6, 2026",
-        timelineGroup = "October 2026",
-        location = "Visitor Center",
-        isFavorite = false,
-        storageLocation = StorageLocation.INTERNAL,
-        folderName = "Documents",
-        fileSizeBytes = 1_220_000L,
-        width = 1080,
-        height = 1920,
-        isCloudSynced = true
-      ),
-      MediaItem(
-        id = "m_video_1",
-        title = "Crystal Lake Drone Loop",
-        drawableResId = R.drawable.sample_nature_mountain,
-        mediaType = MediaType.VIDEO,
-        category = SmartCategory.VIDEOS,
-        timestamp = System.currentTimeMillis() - 86_400_000L * 8,
-        dateFormatted = "Oct 4, 2026",
-        timelineGroup = "October 2026",
-        location = "Alpine Lake Vista",
-        isFavorite = true,
-        storageLocation = StorageLocation.SD_CARD,
-        folderName = "Trip 2026",
-        fileSizeBytes = 48_500_000L,
-        width = 1920,
-        height = 1080,
-        durationSeconds = 48,
-        isCloudSynced = true
-      ),
-      MediaItem(
-        id = "m_movie_1",
-        title = "California Wilderness Reel",
-        drawableResId = R.drawable.sample_nature_mountain,
-        mediaType = MediaType.VIDEO,
-        category = SmartCategory.MOVIES,
-        timestamp = System.currentTimeMillis() - 86_400_000L * 15,
-        dateFormatted = "Sep 27, 2026",
-        timelineGroup = "September 2026",
-        location = "Highway 1 Coastline",
-        isFavorite = false,
-        storageLocation = StorageLocation.INTERNAL,
-        folderName = "Trip 2026",
-        fileSizeBytes = 120_000_000L,
-        width = 1920,
-        height = 1080,
-        durationSeconds = 142,
-        isCloudSynced = true
-      ),
-      MediaItem(
-        id = "m_animal_2",
-        title = "Playful Puppy in Park",
-        drawableResId = R.drawable.sample_animal_fox,
-        mediaType = MediaType.PHOTO,
-        category = SmartCategory.ANIMALS,
-        timestamp = System.currentTimeMillis() - 86_400_000L * 18,
-        dateFormatted = "Sep 24, 2026",
-        timelineGroup = "September 2026",
-        location = "Presidio, San Francisco",
-        isFavorite = false,
-        storageLocation = StorageLocation.INTERNAL,
-        folderName = "Camera",
-        fileSizeBytes = 2_700_000L,
-        width = 1920,
-        height = 1440,
-        isCloudSynced = true
-      ),
-      MediaItem(
-        id = "m_people_2",
-        title = "Friends Picnic at Sunset",
-        drawableResId = R.drawable.sample_portrait_smile,
-        mediaType = MediaType.PHOTO,
-        category = SmartCategory.PEOPLE,
-        timestamp = System.currentTimeMillis() - 86_400_000L * 22,
-        dateFormatted = "Sep 20, 2026",
-        timelineGroup = "September 2026",
-        location = "Bernal Heights, CA",
-        isFavorite = false,
-        storageLocation = StorageLocation.SD_CARD,
-        folderName = "Trip 2026",
-        fileSizeBytes = 3_800_000L,
-        width = 1440,
-        height = 1920,
-        isCloudSynced = true
-      ),
-      MediaItem(
-        id = "m_screenshot_1",
-        title = "App Settings Screenshot",
-        drawableResId = R.drawable.sample_nature_mountain,
-        mediaType = MediaType.PHOTO,
-        category = SmartCategory.DOCUMENTS,
-        timestamp = System.currentTimeMillis() - 86_400_000L * 3,
-        dateFormatted = "Oct 9, 2026",
-        timelineGroup = "October 2026",
-        location = "Device Screen",
-        isFavorite = false,
-        storageLocation = StorageLocation.INTERNAL,
-        folderName = "Screenshots",
-        fileSizeBytes = 1_850_000L,
-        width = 1080,
-        height = 2400,
-        isCloudSynced = false
-      )
-    )
-
-    _mediaItems.value = initialItems
-    recalculateFolders(initialItems)
   }
 
   fun scanDeviceMedia() {
@@ -268,15 +57,8 @@ class GalleryRepository(private val appContext: Context) {
       _isScanningDevice.value = true
       try {
         val deviceMedia = MediaStoreHelper.loadDeviceMedia(appContext)
-        if (deviceMedia.isNotEmpty()) {
-          _mediaItems.update { current ->
-            val userCurrent = current.filterNot { it.id.startsWith("m_") }
-            val existingIds = deviceMedia.map { it.id }.toSet()
-            val filteredCurrent = userCurrent.filterNot { it.id in existingIds }
-            (deviceMedia + filteredCurrent).sortedByDescending { it.timestamp }
-          }
-          recalculateFolders(_mediaItems.value)
-        }
+        _mediaItems.value = deviceMedia
+        recalculateFolders(deviceMedia)
       } catch (e: Exception) {
         Log.e("GalleryRepository", "Failed to scan device media", e)
       } finally {
@@ -303,7 +85,7 @@ class GalleryRepository(private val appContext: Context) {
         id = "f_${storage.name.lowercase()}_${name.lowercase().replace(" ", "_")}",
         name = name,
         storageLocation = storage,
-        coverResId = cover?.drawableResId ?: if (cover?.customUri != null) null else R.drawable.sample_nature_mountain,
+        coverResId = cover?.drawableResId,
         coverUri = cover?.customUri,
         itemCount = folderMedia.size,
         sizeMb = sizeMb
@@ -417,7 +199,7 @@ class GalleryRepository(private val appContext: Context) {
       id = "f_${storage.name.lowercase()}_${name.lowercase().replace(" ", "_")}",
       name = name,
       storageLocation = storage,
-      coverResId = R.drawable.sample_nature_mountain,
+      coverResId = null,
       itemCount = 0,
       sizeMb = 0.0
     )
@@ -477,27 +259,6 @@ class GalleryRepository(private val appContext: Context) {
   }
 
   fun simulateNewArrivals() {
-    val arrival = MediaItem(
-      id = "arrival_${UUID.randomUUID()}",
-      title = "New Arrival: Coastal Cliffs Sunset",
-      drawableResId = R.drawable.sample_nature_mountain,
-      mediaType = MediaType.PHOTO,
-      category = SmartCategory.NATURE,
-      timestamp = System.currentTimeMillis(),
-      dateFormatted = "Just now",
-      timelineGroup = "Today",
-      location = "Big Sur Coast, CA",
-      isFavorite = false,
-      storageLocation = StorageLocation.INTERNAL,
-      folderName = "Camera",
-      fileSizeBytes = 3_750_000L,
-      width = 1920,
-      height = 1440,
-      isCloudSynced = true
-    )
-
-    _mediaItems.update { listOf(arrival) + it }
-    recalculateFolders(_mediaItems.value)
-    NotificationHelper.notifyNewArrivals(appContext, 1, "Cloud Feed")
+    scanDeviceMedia()
   }
 }
