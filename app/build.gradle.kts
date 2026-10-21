@@ -11,8 +11,8 @@ android {
         applicationId = "com.sk.gallery.photo.album"
         minSdk = 26
         targetSdk = 37
-        versionCode = 8
-        versionName = "2.5"
+        versionCode = 1
+        versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
