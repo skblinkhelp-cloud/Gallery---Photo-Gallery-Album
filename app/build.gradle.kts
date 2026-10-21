@@ -4,15 +4,15 @@ plugins {
 }
 
 android {
-    namespace = "com.aistudio.gallery.pxkq"
+    namespace = "com.sk.gallery.photo.album"
     compileSdk = 37
 
     defaultConfig {
-        applicationId = "com.aistudio.gallery.pxkq"
+        applicationId = "com.sk.gallery.photo.album"
         minSdk = 26
         targetSdk = 37
-        versionCode = 7
-        versionName = "2.4"
+        versionCode = 8
+        versionName = "2.5"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
