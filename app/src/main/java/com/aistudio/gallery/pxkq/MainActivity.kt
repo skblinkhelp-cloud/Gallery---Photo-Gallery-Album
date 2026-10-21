@@ -36,7 +36,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
@@ -60,6 +62,7 @@ import com.aistudio.gallery.pxkq.ui.screens.OrganizeTab
 import com.aistudio.gallery.pxkq.ui.screens.PhotoEditorScreen
 import com.aistudio.gallery.pxkq.ui.screens.PhotoViewerScreen
 import com.aistudio.gallery.pxkq.ui.screens.PhotosTab
+import com.aistudio.gallery.pxkq.ui.screens.SplashScreen
 import com.aistudio.gallery.pxkq.ui.theme.GalleryTheme
 import com.aistudio.gallery.pxkq.util.NotificationHelper
 
@@ -73,9 +76,20 @@ class MainActivity : ComponentActivity() {
     setContent {
       val viewModel: GalleryViewModel = viewModel()
       val themeMode by viewModel.themeMode.collectAsStateWithLifecycle()
+      var showSplash by remember { mutableStateOf(true) }
 
       GalleryTheme(themeMode = themeMode) {
-        GalleryApp(viewModel = viewModel)
+        AnimatedContent(
+          targetState = showSplash,
+          transitionSpec = { fadeIn() togetherWith fadeOut() },
+          label = "splash_transition"
+        ) { isSplash ->
+          if (isSplash) {
+            SplashScreen(onSplashFinished = { showSplash = false })
+          } else {
+            GalleryApp(viewModel = viewModel)
+          }
+        }
       }
     }
   }
