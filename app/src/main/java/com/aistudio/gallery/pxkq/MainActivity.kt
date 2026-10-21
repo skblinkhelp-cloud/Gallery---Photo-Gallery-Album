@@ -1,6 +1,7 @@
 package com.aistudio.gallery.pxkq
 
 import android.Manifest
+import android.app.Activity
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
@@ -16,8 +17,11 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AutoAwesome
@@ -64,7 +68,9 @@ import com.aistudio.gallery.pxkq.ui.screens.PhotoViewerScreen
 import com.aistudio.gallery.pxkq.ui.screens.PhotosTab
 import com.aistudio.gallery.pxkq.ui.screens.SplashScreen
 import com.aistudio.gallery.pxkq.ui.theme.GalleryTheme
+import com.aistudio.gallery.pxkq.util.AdManager
 import com.aistudio.gallery.pxkq.util.NotificationHelper
+import com.aistudio.gallery.pxkq.util.TestBannerAd
 
 class MainActivity : ComponentActivity() {
 
@@ -72,6 +78,7 @@ class MainActivity : ComponentActivity() {
     super.onCreate(savedInstanceState)
     enableEdgeToEdge()
     NotificationHelper.initChannels(this)
+    AdManager.initialize(this)
 
     setContent {
       val viewModel: GalleryViewModel = viewModel()
@@ -124,6 +131,7 @@ fun GalleryApp(viewModel: GalleryViewModel) {
   val showCleanStorageDialog by viewModel.showCleanStorageDialog.collectAsStateWithLifecycle()
 
   val context = LocalContext.current
+  val activity = context as? Activity
 
   // Notification Permission Request (Android 13+)
   val notificationPermissionLauncher = rememberLauncherForActivityResult(
@@ -255,57 +263,66 @@ fun GalleryApp(viewModel: GalleryViewModel) {
             )
           },
           bottomBar = {
-            if (viewModel.isSelectionMode) {
-              MultiSelectActionBar(
-                selectedCount = selectedMediaIds.size,
-                totalCount = filteredMediaItems.size,
-                onClearSelection = { viewModel.clearSelection() },
-                onSelectAll = { viewModel.selectAll() },
-                onAutoEnhanceBatch = { viewModel.applyBatchAutoEnhance() },
-                onMoveToFolder = { viewModel.openMoveCopyDialog(isCopy = false) },
-                onCopyToFolder = { viewModel.openMoveCopyDialog(isCopy = true) },
-                onDeleteBatch = { viewModel.deleteSelectedMedia() },
-                onShareBatch = { viewModel.clearSelection() }
-              )
-            } else if (!isExpanded) {
-              // Standard M3 Navigation Bar for Mobile
-              NavigationBar(modifier = Modifier.testTag("gallery_navigation_bar")) {
-                NavigationBarItem(
-                  selected = currentScreen == GalleryScreen.PHOTOS,
-                  onClick = { viewModel.setScreen(GalleryScreen.PHOTOS) },
-                  icon = {
-                    Icon(
-                      imageVector = if (currentScreen == GalleryScreen.PHOTOS) Icons.Filled.PhotoLibrary else Icons.Outlined.PhotoLibrary,
-                      contentDescription = "Photos"
-                    )
-                  },
-                  label = { Text("Photos") },
-                  modifier = Modifier.testTag("nav_item_photos")
+            Column(
+              modifier = Modifier
+                .fillMaxWidth()
+                .navigationBarsPadding()
+            ) {
+              // Testing AdMob Banner Ad
+              TestBannerAd()
+
+              if (viewModel.isSelectionMode) {
+                MultiSelectActionBar(
+                  selectedCount = selectedMediaIds.size,
+                  totalCount = filteredMediaItems.size,
+                  onClearSelection = { viewModel.clearSelection() },
+                  onSelectAll = { viewModel.selectAll() },
+                  onAutoEnhanceBatch = { viewModel.applyBatchAutoEnhance() },
+                  onMoveToFolder = { viewModel.openMoveCopyDialog(isCopy = false) },
+                  onCopyToFolder = { viewModel.openMoveCopyDialog(isCopy = true) },
+                  onDeleteBatch = { viewModel.deleteSelectedMedia() },
+                  onShareBatch = { viewModel.clearSelection() }
                 )
-                NavigationBarItem(
-                  selected = currentScreen == GalleryScreen.FOLDERS,
-                  onClick = { viewModel.setScreen(GalleryScreen.FOLDERS) },
-                  icon = {
-                    Icon(
-                      imageVector = if (currentScreen == GalleryScreen.FOLDERS) Icons.Filled.Folder else Icons.Outlined.Folder,
-                      contentDescription = "Folders"
-                    )
-                  },
-                  label = { Text("Folders") },
-                  modifier = Modifier.testTag("nav_item_folders")
-                )
-                NavigationBarItem(
-                  selected = currentScreen == GalleryScreen.ORGANIZE,
-                  onClick = { viewModel.setScreen(GalleryScreen.ORGANIZE) },
-                  icon = {
-                    Icon(
-                      imageVector = if (currentScreen == GalleryScreen.ORGANIZE) Icons.Filled.AutoAwesome else Icons.Outlined.AutoAwesome,
-                      contentDescription = "Organize"
-                    )
-                  },
-                  label = { Text("Organize") },
-                  modifier = Modifier.testTag("nav_item_organize")
-                )
+              } else if (!isExpanded) {
+                // Standard M3 Navigation Bar for Mobile
+                NavigationBar(modifier = Modifier.testTag("gallery_navigation_bar")) {
+                  NavigationBarItem(
+                    selected = currentScreen == GalleryScreen.PHOTOS,
+                    onClick = { viewModel.setScreen(GalleryScreen.PHOTOS) },
+                    icon = {
+                      Icon(
+                        imageVector = if (currentScreen == GalleryScreen.PHOTOS) Icons.Filled.PhotoLibrary else Icons.Outlined.PhotoLibrary,
+                        contentDescription = "Photos"
+                      )
+                    },
+                    label = { Text("Photos") },
+                    modifier = Modifier.testTag("nav_item_photos")
+                  )
+                  NavigationBarItem(
+                    selected = currentScreen == GalleryScreen.FOLDERS,
+                    onClick = { viewModel.setScreen(GalleryScreen.FOLDERS) },
+                    icon = {
+                      Icon(
+                        imageVector = if (currentScreen == GalleryScreen.FOLDERS) Icons.Filled.Folder else Icons.Outlined.Folder,
+                        contentDescription = "Folders"
+                      )
+                    },
+                    label = { Text("Folders") },
+                    modifier = Modifier.testTag("nav_item_folders")
+                  )
+                  NavigationBarItem(
+                    selected = currentScreen == GalleryScreen.ORGANIZE,
+                    onClick = { viewModel.setScreen(GalleryScreen.ORGANIZE) },
+                    icon = {
+                      Icon(
+                        imageVector = if (currentScreen == GalleryScreen.ORGANIZE) Icons.Filled.AutoAwesome else Icons.Outlined.AutoAwesome,
+                        contentDescription = "Organize"
+                      )
+                    },
+                    label = { Text("Organize") },
+                    modifier = Modifier.testTag("nav_item_organize")
+                  )
+                }
               }
             }
           }
@@ -380,7 +397,11 @@ fun GalleryApp(viewModel: GalleryViewModel) {
                       if (viewModel.isSelectionMode) {
                         viewModel.toggleSelection(item.id)
                       } else {
-                        viewModel.openViewer(item.id)
+                        activity?.let {
+                          AdManager.showInterstitialIfReady(it) {
+                            viewModel.openViewer(item.id)
+                          }
+                        } ?: viewModel.openViewer(item.id)
                       }
                     },
                     onMediaLongClick = { item ->
